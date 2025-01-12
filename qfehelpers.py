@@ -1,30 +1,32 @@
 import random
 import secrets
+import hmac
+import hashlib
 
 
 class PP:
-    G = None,
-    A_0_1 = None,
-    A_0_W_1_1 = None,
-    A_0_W_2_1 = None
+    G = None
+    A_0_G_1 = None
+    A_0_W_1_G_1 = None
+    A_0_W_2_G_1 = None
 
-    def __init__(self, G, A_0_1, A_0_W_1_1, A_0_W_2_1):
-        self.G = G,
-        self.A_0_1 = A_0_1,
-        self.A_0_W_1_1 = A_0_W_1_1,
-        self.A_0_W_2_1 = A_0_W_2_1
+    def __init__(self, G, A_0_G_1, A_0_W_1_G_1, A_0_W_2_G_1):
+        self.G = G
+        self.A_0_G_1 = A_0_G_1
+        self.A_0_W_1_G_1 = A_0_W_1_G_1
+        self.A_0_W_2_G_1 = A_0_W_2_G_1
 
 class MSK:
-    K1 = None,
-    K2 = None,
-    W1 = None,
-    W2 = None,
+    K_1 = None
+    K_2 = None
+    W_1 = None
+    W_2 = None
 
-    def __init__(self, K1,K2,W1,W2):
-        self.K1 = K1,
-        self.K2 = K2,
-        self.W1 = W1,
-        self.W2 = W2
+    def __init__(self, K_1,K_2,W_1,W_2):
+        self.K_1 = K_1
+        self.K_2 = K_2
+        self.W_1 = W_1
+        self.W_2 = W_2
 
 
 class SKF:
@@ -36,14 +38,36 @@ class SKF:
         self.K_tilde = K_tilde
 
 
-class CTXY:
-    c = None
-    c_tilde = None
+class CT:
+    y_1 = None
+    y_2 = None
+    c_0 = None
+    y_0 = None
+    Iz_1 = None
+    Iz_2 = None
 
-    def __init__(self, c, c_tilde):
-        self.c = c
-        self.c_tilde = c_tilde
+    def __init__(self, y_1, y_2, c_0, y_0, Iz_1, Iz_2):
+        self.y_1 = y_1
+        self.y_2 = y_2
+        self.c_0 = c_0
+        self.y_0 = y_0
+        self.Iz_1 = Iz_1
+        self.Iz_2 = Iz_2
 
+
+
+
+def pseudo_random_function(key, integer):
+    # Convert the integer to bytes
+    integer_bytes = integer.to_bytes((integer.bit_length() + 7) // 8, byteorder='big')
+    
+    # Create an HMAC object using the key and SHA-256
+    hmac_obj = hmac.new(key, integer_bytes, hashlib.sha3_256)
+    
+    # Get the digest and convert it to an integer
+    prf_output = int.from_bytes(hmac_obj.digest(), byteorder='big')
+    
+    return prf_output
 
 
 def generate_random_key(lamda):
@@ -60,21 +84,12 @@ def generate_random_key(lamda):
         raise ValueError("Key size (lamda) must be a positive integer.")
 
     # Calculate the number of bytes required
-    num_bytes = (lamda + 7) // 8  # Convert bits to bytes, rounding up
 
     # Generate a random byte sequence
-    random_bytes = secrets.token_bytes(num_bytes)
+    random_bytes = secrets.token_bytes(lamda)
 
     # Convert to hexadecimal string
-    random_key = random_bytes.hex()
-
-    # Trim the key to the exact number of bits, if necessary
-    extra_bits = num_bytes * 8 - lamda
-    if extra_bits > 0:
-        random_key = bin(int(random_key, 16))[2:].zfill(num_bytes * 8)[:lamda]
-        random_key = hex(int(random_key, 2))[2:]
-
-    return random_key
+    return random_bytes
 
 
 def apply_to_matrix(matrix, g):
@@ -510,3 +525,52 @@ def scalar_multiply(vector, scalar):
         list[float]: The resulting vector after multiplication with the scalar.
     """
     return [scalar * element for element in vector]
+
+
+def tensor_product(A, B):
+    # Get the dimensions of A and B
+    m, n = len(A), len(A[0])  # A is m x n
+    p, q = len(B), len(B[0])  # B is p x q
+    
+    # Initialize the resulting tensor product matrix
+    result = [[0] * (n * q) for _ in range(m * p)]
+    
+    # Fill the resulting matrix
+    for i in range(m):
+        for j in range(n):
+            for k in range(p):
+                for l in range(q):
+                    result[i * p + k][j * q + l] = A[i][j] * B[k][l]
+    
+    return result
+
+def matrix_concat(A, B):
+    """
+    Concatenates two matrices A and B horizontally.
+
+    Args:
+        A (list[list[float]]): The first matrix.
+        B (list[list[float]]): The second matrix.
+
+    Returns:
+        list[list[float]]: The resulting matrix after concatenation.
+    """
+    return [row_A + row_B for row_A, row_B in zip(A, B)]
+
+
+def get_matrix_dimensions(matrix):
+    """
+    Get the dimensions of a matrix.
+    
+    Args:
+    matrix (list of list of int/float): The matrix
+    
+    Returns:
+    tuple: A tuple containing the number of rows and columns (rows, cols)
+    """
+    if not matrix:
+        return (0, 0)
+    rows = len(matrix)
+    cols = len(matrix[0])
+    print("rows: ", rows)
+    print("cols: ", cols)

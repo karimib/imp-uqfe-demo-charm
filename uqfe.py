@@ -1,22 +1,19 @@
-import random
+import secrets
+import hmac
+import hashlib
 from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT
 from qfehelpers import (
     apply_to_matrix,
-    transpose_matrix,
+    tensor_product,
     random_int_matrix,
     matrix_multiply_mod,
-    vector_matrix_multiply_mod,
-    vector_multiply_mod,
-    matrix_vector_multiply,
-    vector_transposed_mul_matrix_mul_vector,
-    dot_product,
-    scalar_multiply,
     generate_random_key,
+    pseudo_random_function,
+    matrix_concat,
+    get_matrix_dimensions,
     PP,
-    MPK,
     MSK,
-    SKF,
-    CTXY,
+    CT
 )
 
 ######################################## PARAMETERS ###################################################################
@@ -62,111 +59,99 @@ class UQFE:
     g1 = None
     g2 = None
     gt = None
+    k = None
+    k_prime = None
+    lamda = None
+    H_1 = None
+    H_2 = None
+    A_0 = None
+    A_1 = None
+    A_2 = None
 
     # TODO: Remove after bechmarking
-    def __init__(self, group, p_order, g1, g2, gt):
+    def __init__(self, group, p_order, g1, g2, gt, k, k_prime, lamda):
         self.group = group
         self.p_order = p_order
         self.g1 = g1
         self.g2 = g2
         self.gt = gt
+        self.k = k
+        self.k_prime = k_prime
+        self.lamda = lamda
+        self.H_1 = []
+        self.H_2 = []
+        self.A_1 = []
+        self.A_2 = []
 
     def get_p_order(self):
         return self.p_order
 
-    def setup(self, p=p_order, k=None, lamda=None):
-        A0 = random_int_matrix(0,p,k,k+1)
-        W1 = random_int_matrix(0,p,k+1,k)
-        W2 = random_int_matrix(0,p,k,k+1)
-        K1 = generate_random_key(lamda)
-        K2 = generate_random_key(lamda)
-        A01 = apply_to_matrix(A0, self.g1)
-        A0W1 = apply_to_matrix(matrix_multiply_mod(A0, W1, p), self.g1)
-        A0W2 = apply_to_matrix(matrix_multiply_mod(A0, W2, p), self.g1)
-        pp = PP(self.group, A01, A0W1, A0W2)
-        msk = MSK(K1, K2, W1, W2)
+    def setup(self, p=p_order):
+        # Parameters
+
+        A_0 = random_int_matrix(0, p, self.k_prime, self.k_prime + 1)
+        self.A_0 = A_0
+        W_1 = random_int_matrix(0, p, self.k_prime + 1, self.k_prime)
+        W_2 = random_int_matrix(0, p, self.k_prime + 1, self.k)
+        # Q: Are these keys the seeds for the PRF ?
+        K_1 = generate_random_key(self.lamda)
+        K_2 = generate_random_key(self.lamda)
+        A_0_G_1 = apply_to_matrix(A_0, self.g1)
+        A_0_W_1_G_1 = apply_to_matrix(matrix_multiply_mod(A_0, W_1, p), self.g1)
+        A_0_W_2_G_1 = apply_to_matrix(matrix_multiply_mod(A_0, W_2, p), self.g1)
+        pp = PP(self.group, A_0_G_1, A_0_W_1_G_1, A_0_W_2_G_1)
+        msk = MSK(K_1, K_2, W_1, W_2)
         return pp, msk
 
+    def encrypt(self, pp, msk, z_1, z_2, Iz_1, Iz_2):
+        for i_l in Iz_1:
+            a1 = random_int_matrix(1, self.p_order, self.k, 1)
+            self.H_1.append((apply_to_matrix(a1, self.g1), apply_to_matrix(a1, self.g2)))
+            self.A_1.append(a1)
+
+        for j_l in Iz_2:
+            a2 = random_int_matrix(1, self.p_order, self.k_prime, 1)
+            self.H_2.append(apply_to_matrix(a2, self.g2))
+            self.A_2.append(a2)
+
+        w_1 = []
+        w_2 = []
+        for i_l in Iz_1:
+            w_1.append([pseudo_random_function(msk.K_1, i_l)])
+
+        for j_l in Iz_2:
+            w_2.append([pseudo_random_function(msk.K_2, j_l)])
+
+        print("k : ", self.k)
+        print("k_prime : ", self.k_prime)
+        print("n1 : ", len(self.H_1))
+        print("n2 : ", len(self.H_2))
+        print("w1 : ", w_1)
+        W_2_tilde = tensor_product(msk.W_2, w_2)
+        W_1_tilde = tensor_product(msk.W_1, w_1)
+        # TODO: Check if this is correct
+        A_O_W = matrix_concat(matrix_multiply_mod(self.A_0, W_1_tilde, self.p_order), matrix_multiply_mod(self.A_0, W_2_tilde, self.p_order))
+        s_1 = random_int_matrix(1, self.p_order, self.k, 1)
+        s_0 = random_int_matrix(1, self.p_order, self.k_prime, 1)
+        s_2 = random_int_matrix(1, self.p_order, self.k_prime, 1)
+
+        y1 = matrix_multiply_mod(s_1, self.A_1, self.p_order) + z_1
+        y2 = matrix_multiply_mod(s_2, self.A_2, self.p_order) + z_2
+        c0 = matrix_multiply_mod(s_0, self.A_0, self.p_order)
+        y0 = matrix_multiply_mod(s_0, A_O_W, self.p_order) + tensor_product(s_1, z_2) + tensor_product(y1, s_2)
+
+        ct = CT(y1, y2, c0, y0)
+
+
+        return ct
+
     def keygen(self, p=p_order, mpk=None, msk=None, F=None):
-        # Generate random element u <- Z_p
-        u = random.randint(0, p - 1)  # u <- Z_p
-        # Generate random matrix F <- Z_p^(n x m)
-        A = msk.A
-        B = msk.B
-        r = msk.r
-        s = msk.s
-        g1 = mpk.g1
-        g2 = mpk.g2
-        n = len(r)
-        m = len(s)
-
-        sum = 0
-        ATB = matrix_multiply_mod(transpose_matrix(A), B, p)
-        for i in range(n):
-            riT_AT_B = vector_matrix_multiply_mod(r[i], ATB, p)
-            for j in range(m):
-                riT_AT_B_sj = vector_multiply_mod(riT_AT_B, s[j], p)
-                sum += (F[i][j] * riT_AT_B_sj) % p
-
-        # Compute K and K_tilde
-        K = g1 ** int(sum - u)
-        K_tilde = g2 ** int(u)
-
-        skF = SKF(K, K_tilde)  # secret key for F
-        return skF
-
-    def encrypt(self, msk, x, y):
-        A = msk.A
-        B = msk.B
-        a = msk.a
-        b = msk.b
-        r = msk.r
-        s = msk.s
-
-        # Compute c and c_tilde
-        c = [
-            matrix_vector_multiply(A, r[i]) + scalar_multiply(b, x[i])
-            for i in range(len(x))
-        ]
-        c_tilde = [
-            matrix_vector_multiply(B, s[j]) + scalar_multiply(a, y[j])
-            for j in range(len(y))
-        ]
-
-        CT_xy = CTXY(c, c_tilde)
-        return CT_xy
+        
+        return 0
 
     def decrypt(
         self, p=p_order, mpk=None, skF=None, CT_xy=None, n=None, m=None, F=None
     ):
-        c = CT_xy.c
-        c_tilde = CT_xy.c_tilde
-        K = skF.K
-        K_tilde = skF.K_tilde
-        g1 = mpk.g1
-        g2 = mpk.g2 
-        gt = mpk.gt
-
-        D = self.group.random(GT)
-        exp = 0
-        for i in range(n):
-            for j in range(m):
-                exp += int(F[i][j] * int(dot_product(c[i], c_tilde[j])))
-
-        D = gt**exp
-        D *= -(self.group.pair_prod(K, g2))
-        D *= -(self.group.pair_prod(g1, K_tilde))
-
-        # Find v such that [v * (b.T)*a]_T = D
-        v = 0
-        res = self.group.random(GT)
-        inner = mpk.baT
-        while D != res and v < p:
-            v += 1
-            res = gt ** int(v * inner)
+        
 
         return v
-
-    def get_expected_result(self,p=p_order, x=None, F=None, y=None):
-        expected = vector_transposed_mul_matrix_mul_vector(x, F, y, p)
-        return expected

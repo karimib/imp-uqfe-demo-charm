@@ -8,9 +8,9 @@ from qfehelpers import (
 )
 from uqfe import UQFE
 
-k = 9  # parameter for generation of D-k matrices
-m = k # mxn matric
-n = k - 1
+k = 3
+k_prime = 3
+lamda = 128
 
 
 
@@ -22,7 +22,29 @@ g1.initPP()
 g2 = group.random(G2)
 g2.initPP()
 gt = group.pair_prod(g1, g2)
-G = UQFE(group, p_order, g1, g2, gt)
+G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
+
+def implementation_check():
+    psetup = True
+    pp, msk = G.setup(p_order)
+    if psetup:
+        print("A_0_G_1: ", pp.A_0_G_1)
+        print("A_0_W_1_G_1: ", pp.A_0_W_1_G_1)
+        print("A_0_W_2_G_1: ", pp.A_0_W_2_G_1)
+        print("K_1: ", msk.K_1)
+        print("K_2: ", msk.K_2)
+        print("W_1: ", msk.W_1)
+        print("W_2: ", msk.W_2)
+
+    pencrypt = True
+    z_1 = random_vector(1, 2, k)
+    z_2 = random_vector(1, 2, k_prime)
+    Iz_1 = [i for i in range(1, k+1)]
+    Iz_2 = [i for i in range(1, k_prime+1)]
+    CT = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+
+       
+    
 
 
 
@@ -126,5 +148,6 @@ def simulation_p_vectors():
 
 
 
-simulation_fixed_vectors()
+#simulation_fixed_vectors()
 #simulation_p_vectors()
+implementation_check()

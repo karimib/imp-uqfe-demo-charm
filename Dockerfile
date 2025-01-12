@@ -6,7 +6,6 @@ RUN wget https://crypto.stanford.edu/pbc/files/pbc-0.5.14.tar.gz && tar xvf pbc-
 COPY ./ext /charm
 RUN cd /charm && ./configure.sh && make && make install && ldconfig
 
-
 FROM base AS testing 
 # Helper class 
 COPY ./qfehelpers.py .
