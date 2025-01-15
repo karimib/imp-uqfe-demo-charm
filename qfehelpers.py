@@ -562,13 +562,33 @@ def matrix_concat(A, B):
     Concatenates two matrices A and B horizontally.
 
     Args:
-        A (list[list[float]]): The first matrix.
-        B (list[list[float]]): The second matrix.
+        A (list[list[int]]): The first matrix.
+        B (list[list[int]]): The second matrix.
 
     Returns:
-        list[list[float]]: The resulting matrix after concatenation.
+        list[list[int]]: The resulting matrix after concatenation.
     """
     return [row_A + row_B for row_A, row_B in zip(A, B)]
+
+
+def add_vectors(vector_a, vector_b):
+    """
+    Adds two vectors of the same length.
+
+    Args:
+        vector_a: A list representing the first vector.
+        vector_b: A list representing the second vector.
+
+    Returns:
+        A new vector representing the element-wise sum of vector_a and vector_b.
+
+    Raises:
+        ValueError: If the vectors do not have the same length.
+    """
+    if len(vector_a) != len(vector_b):
+        raise ValueError("Vectors must have the same length.")
+
+    return [a + b for a, b in zip(vector_a, vector_b)]
 
 
 def get_matrix_dimensions(matrix, mat):
@@ -588,3 +608,16 @@ def get_matrix_dimensions(matrix, mat):
     print("Matrix: ", mat)
     print("rows: ", rows)
     print("cols: ", cols)
+    
+def identity_matrix(n):
+    """
+    Creates an n x n identity matrix in the form of a list of lists.
+
+    Example for n=3:
+    [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1]
+    ]
+    """
+    return [[1 if i == j else 0 for j in range(n)] for i in range(n)]

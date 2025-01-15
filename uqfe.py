@@ -1,8 +1,6 @@
 import secrets
 import hmac
 import hashlib
-import sys
-import numpy as np
 from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT
 from qfehelpers import (
     apply_to_matrix,
@@ -16,6 +14,7 @@ from qfehelpers import (
     vector_matrix_multiply_mod,
     get_matrix_dimensions,
     apply_to_vector,
+    add_vectors,
     PP,
     MSK,
     CT
@@ -95,6 +94,7 @@ class UQFE:
         self.HF_2 = []
         self.AF_1 = []
         self.AF_2 = []
+        
 
     def get_p_order(self):
         return self.p_order
@@ -137,50 +137,43 @@ class UQFE:
 
         w_1 = [w_1]
         w_2 = [w_2]
-        print("k : ", self.k)
-        print("k_prime : ", self.k_prime)
-        print("n1 : ", len(self.H_1))
-        print("n2 : ", len(self.H_2))
-        print("w1 : ", w_1)
         
-        
-        # Change to int 
         W_1_tilde = tensor_product(msk.W_1, w_1)
         W_2_tilde = tensor_product(msk.W_2, w_2)
-    
-        # TODO: Check if this is correct
-        A_O_W = matrix_concat(matrix_multiply_mod(self.A_0, W_1_tilde, self.p_order), matrix_multiply_mod(self.A_0, W_2_tilde, self.p_order))
+        #get_matrix_dimensions(W_1_tilde, "W1_Tilde")
+        #get_matrix_dimensions(W_2_tilde, "W2_Tilde")
+
+        A_0_W = matrix_concat(matrix_multiply_mod(self.A_0, W_1_tilde, self.p_order), matrix_multiply_mod(self.A_0, W_2_tilde, self.p_order))
+        #get_matrix_dimensions(A_O_W, "A_0_W")
+        #print("A_0_W", A_O_W)
         s_1 = random_vector(0, self.p_order, self.k) 
         s_0 = random_vector(0, self.p_order, self.k_prime) 
         s_2 = random_vector(0, self.p_order, self.k_prime) 
-        print("s1", s_1 )
-  #      print("s0", s_0 )
-  #      print("s2", s_2 )
-        print("A1", self.A_1)
-#        print("A2", self.A_2)
- #       print("A0", self.A_0)
-        y1 = vector_matrix_multiply_mod(s_1, self.A_1, self.p_order) + z_1
-        y2 = vector_matrix_multiply_mod(s_2, self.A_2, self.p_order) + z_2
-        c0 = vector_matrix_multiply_mod(s_0, self.A_0, self.p_order) 
-        y0 = vector_matrix_multiply_mod(s_0, A_O_W, self.p_order) 
-        print("s1", s_1)
-        print("z_2", z_2)
+     
+        y1 = add_vectors(vector_matrix_multiply_mod(s_1, self.A_1, self.p_order), z_1)
+        y2 = add_vectors(vector_matrix_multiply_mod(s_2, self.A_2, self.p_order), z_2)
+        c0 = vector_matrix_multiply_mod(s_0, self.A_0, self.p_order)
+        y0 = vector_matrix_multiply_mod(s_0, A_0_W, self.p_order)
         t0 = tensor_product([s_1], [z_2])
-        print("t0", t0)
+        print("y0: ", y0)
+        print("t0: ", t0)
         t1 = tensor_product([y1], [s_2])
-        y0 += matrix_concat(t0,t1)
-        #y0 += matrix_concat(tensor_product(s_1, z_2), tensor_product(y1, s_2))
+        print("t1: ", t1)
+        t2 = matrix_concat(t0,t1)
+        print("t2: ", t2)
+        t2 = [element for sublist in t2 for element in sublist]
+        y0 = add_vectors(y0, t2)
+        print(y0)
 
-        #y1 = vector_matrix_multiply_mod(s_1, self.A_1, self.p_order) + z_1
-        #y2 = vector_matrix_multiply_mod(s_2, self.A_2, self.p_order) + z_2
-        #c0 = vector_matrix_multiply_mod(s_0, self.A_0, self.p_order)
-        #y0 = vector_matrix_multiply_mod(s_0, A_O_W, self.p_order) + tensor_product(s_1, z_2) + tensor_product(y1, s_2)
+        y1 = apply_to_vector(y1, self.g1)
+        y2 = apply_to_vector(y2, self.g2)
+        c0 = apply_to_vector(c0, self.g1)
+        y0 = apply_to_vector(y0, self.g1)
 
         ct = CT(y1, y2, c0, y0, Iz_1, Iz_2)
         return ct
 
     def keygen(self, pp, msk, f, If_1, If_2):
-        
         for i_l in If_1:
             af1 = random_vector(1, self.p_order, self.k)
             self.HF_1.append((apply_to_vector(af1, self.g1), apply_to_vector(af1, self.g2)))
@@ -202,9 +195,9 @@ class UQFE:
         wf_1 = [wf_1]
         wf_2 = [wf_2]
         
-        WF = matrix_concat(tensor_product(msk.W_1, wf_1), tensor_product(msk.W_2))
-        print("WF:", WF)
-        
+        WF = matrix_concat(tensor_product(msk.W_1, wf_1), tensor_product(msk.W_2, wf_2))
+        upper = tensor_product(self.AF_1, )
+        SKf = 
         return 0
 
     def decrypt(

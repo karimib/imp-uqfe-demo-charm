@@ -25,7 +25,7 @@ gt = group.pair_prod(g1, g2)
 G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
 
 def implementation_check():
-    psetup = True
+    psetup = False
     pp, msk = G.setup(p_order)
     if psetup:
         print("A_0_G_1: ", pp.A_0_G_1)
@@ -42,6 +42,15 @@ def implementation_check():
     Iz_1 = [i for i in range(1, k+1)]
     Iz_2 = [i for i in range(1, k_prime+1)]
     CT = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+    
+    pkeygen = True
+    n1_strich = k
+    n2_string = k_prime
+    f = random_int_matrix(1,2, k, k_prime)
+    If_1 = [i for i in range(1, k+1)]
+    If_2 = [i for i in range(1, k_prime+1)]
+    SKF = G.keygen(pp, msk, f, If_1, If_2)
+    
 
        
     
