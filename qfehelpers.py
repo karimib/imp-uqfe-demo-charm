@@ -105,6 +105,19 @@ def apply_to_matrix(matrix, g):
     """
     return [[g ** value for value in row] for row in matrix]
 
+def apply_to_vector(vector, g):
+    """
+    Applies a function to every element in a matrix.
+
+    Args:
+        matrix (list of list of any): The input matrix.
+        func (callable): A function to apply to each element of the matrix.
+
+    Returns:
+        list of list of any: A new matrix with the function applied to each element.
+    """
+    return [g ** value for value in vector]
+
 
 def vector_multiply_mod(vector1, vector2, p):
     """
@@ -141,7 +154,7 @@ def matrix_multiply_mod(A, B, p):
         list[list[int]]: The resulting matrix after multiplication under modulo p.
     """
     if len(A[0]) != len(B):
-        raise ValueError("Number of columns in A must match number of rows in B")
+        raise ValueError("Number of columns in A must match number of rows in B", get_matrix_dimensions(A, "A: "), get_matrix_dimensions(B, "B: "))
 
     # Initialize the result matrix with zeros
     result = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
@@ -558,7 +571,7 @@ def matrix_concat(A, B):
     return [row_A + row_B for row_A, row_B in zip(A, B)]
 
 
-def get_matrix_dimensions(matrix):
+def get_matrix_dimensions(matrix, mat):
     """
     Get the dimensions of a matrix.
     
@@ -572,5 +585,6 @@ def get_matrix_dimensions(matrix):
         return (0, 0)
     rows = len(matrix)
     cols = len(matrix[0])
+    print("Matrix: ", mat)
     print("rows: ", rows)
     print("cols: ", cols)
