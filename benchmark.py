@@ -93,8 +93,11 @@ def implementation_check():
 def simulation_fixed_vectors():
     results = []
     lamda = 128
+    z_1_max = 3
+    z_2_max = 2
+    F_max = 2
 
-    for k in range(3, 64):
+    for k in range(3, 65):
         k = k
         k_prime = k
         G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
@@ -103,8 +106,8 @@ def simulation_fixed_vectors():
         pp, msk = G.setup(p_order)
         setup_time = time.time() - start_time
 
-        z_1 = random_vector(1, 5, k)
-        z_2 = random_vector(1, 5, k_prime)
+        z_1 = random_vector(1, z_1_max, k)
+        z_2 = random_vector(1, z_2_max, k_prime)
         Iz_1 = [i for i in range(1, k+1)]
         Iz_2 = [i for i in range(1, k_prime+1)]
 
@@ -112,7 +115,7 @@ def simulation_fixed_vectors():
         CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
         encrypt_time = time.time() - start_time
 
-        f = random_vector(1, 2, k*k_prime)
+        f = random_vector(1, F_max, k*k_prime)
         If_1 = Iz_1
         If_2 = Iz_2
 
@@ -139,7 +142,7 @@ def simulation_fixed_vectors():
         s_sk = size_in_kilobits(skf)
         results.append([k, k_prime, lamda, s_msk, s_pp, s_ct, s_sk, setup_time, keygen_time, encrypt_time, decrypt_time, total_time])
 
-    with open('data/uqfe_benchmark_fixed_vectors.csv', 'w', newline='') as csvfile:
+    with open('data/uqfe_benchmark_fixed_vectors_2.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(['k', 'k_prime', 'lamda', 'size msk', 'size pp', 'size ct', 'size sk', 'time setup', 'time keygen', 'time encrypt', 'time decrypt', 'time total'])
         csvwriter.writerows(results)
