@@ -126,13 +126,11 @@ class UQFE:
 
     def encrypt(self, pp, msk, z_1, z_2, Iz_1, Iz_2):
         for i_l in Iz_1:
-            #a1 = [2,3,4]
             a1 = random_vector(1, self.p_order, self.k, seed=i_l)
             self.H_1.append((apply_to_vector(a1, self.g1), apply_to_vector(a1, self.g2)))
             self.A_1.append(a1)
 
         for j_l in Iz_2:
-            #a2 = [4,5,7]
             a2 = random_vector(1, self.p_order, self.k_prime, seed=j_l)
             self.H_2.append(apply_to_vector(a2, self.g2))
             self.A_2.append(a2)
@@ -184,7 +182,6 @@ class UQFE:
     def keygen(self, pp, msk, f, If_1, If_2):
         for i_l in If_1:
             af1 = random_vector(1, self.p_order, self.k, seed=i_l)
-            #af1 = [2,3,4]
             self.HF_1.append((apply_to_vector(af1, self.g1), apply_to_vector(af1, self.g2)))
             self.AF_1.append(af1)
 
@@ -192,7 +189,6 @@ class UQFE:
         for j_l in If_2:
             # Fixing the seed for testing purposes
             af2 = random_vector(1, self.p_order, self.k_prime,seed=j_l)
-            #af2 = [4,5,7]
             self.HF_2.append(apply_to_vector(af2, self.g2))
             self.AF_2.append(af2)
         
