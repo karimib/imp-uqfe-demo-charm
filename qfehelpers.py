@@ -30,12 +30,16 @@ class MSK:
 
 
 class SKF:
-    K = None
-    K_tilde = None
+    SK = None
+    F = None
+    If_1 = None
+    If_2 = None
 
-    def __init__(self, K, K_tilde):
-        self.K = K
-        self.K_tilde = K_tilde
+    def __init__(self, SK, F, If_1, If_2):
+        self.SK = SK
+        self.F = F
+        self.If_1 = If_1
+        self.If_2 = If_2
 
 
 class CT:
@@ -621,3 +625,28 @@ def identity_matrix(n):
     ]
     """
     return [[1 if i == j else 0 for j in range(n)] for i in range(n)]
+
+
+def tensor_product_matrix_vector(matrix, vector):
+    """
+    Compute the tensor product (Kronecker product) of a matrix and a vector.
+    
+    Args:
+    matrix (list of list of int/float): The matrix
+    vector (list of int/float): The vector
+    
+    Returns:
+    list of list of int/float: Tensor product of the matrix and the vector
+    """
+    rows_matrix, cols_matrix = len(matrix), len(matrix[0])
+    len_vector = len(vector)
+    
+    # Initialize the result matrix with zeros
+    result = [[0] * (cols_matrix * len_vector) for _ in range(rows_matrix)]
+    
+    for i in range(rows_matrix):
+        for j in range(cols_matrix):
+            for k in range(len_vector):
+                result[i][j * len_vector + k] = matrix[i][j] * vector[k]
+    
+    return result

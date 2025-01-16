@@ -17,8 +17,11 @@ from qfehelpers import (
     add_vectors,
     identity_matrix,
     transpose_matrix,
+    transpose_vector,
+    tensor_product_matrix_vector,
     PP,
     MSK,
+    SKF,
     CT
 )
 
@@ -142,12 +145,9 @@ class UQFE:
         
         W_1_tilde = tensor_product(msk.W_1, w_1)
         W_2_tilde = tensor_product(msk.W_2, w_2)
-        #get_matrix_dimensions(W_1_tilde, "W1_Tilde")
-        #get_matrix_dimensions(W_2_tilde, "W2_Tilde")
+
 
         A_0_W = matrix_concat(matrix_multiply_mod(self.A_0, W_1_tilde, self.p_order), matrix_multiply_mod(self.A_0, W_2_tilde, self.p_order))
-        #get_matrix_dimensions(A_O_W, "A_0_W")
-        #print("A_0_W", A_O_W)
         s_1 = random_vector(0, self.p_order, self.k) 
         s_0 = random_vector(0, self.p_order, self.k_prime) 
         s_2 = random_vector(0, self.p_order, self.k_prime) 
@@ -194,29 +194,27 @@ class UQFE:
         for j_l in If_2:
             wf_2.append(pseudo_random_function(msk.K_2, j_l))
 
-        wf_1 = [wf_1]
-        wf_2 = [wf_2]
-        
-        WF = matrix_concat(tensor_product(msk.W_1, wf_1), tensor_product(msk.W_2, wf_2))
+      
+        t0 = tensor_product_matrix_vector(msk.W_1, wf_1)
+        get_matrix_dimensions(t0, "t0: ")
+        t1 = tensor_product_matrix_vector(msk.W_2, wf_2)
+        get_matrix_dimensions(t1, "t1: ")
+        WF = matrix_concat(t0,t1)
         get_matrix_dimensions(WF, "WF: ")
-        upper = tensor_product(self.AF_1, matrix_multiply_mod(identity_matrix(len(If_2)), transpose_matrix(f), self.p_order))
-        lower = tensor_product(matrix_multiply_mod(identity_matrix(len(If_1)), transpose_matrix(f), self.p_order), self.AF_2)
-        upper = [element for sublist in upper for element in sublist]
-        lower = [element for sublist in lower for element in sublist]
-        print("upper: ", len(upper))
-        print("lower: ", len(lower))
-        
-        combined = [upper, lower]
-        
-        get_matrix_dimensions(WF, "WF: ")
-        get_matrix_dimensions(combined, "combined: ")
-        skf = matrix_multiply_mod(WF, combined, self.p_order)
-                            
+
+        AFF = tensor_product(self.AF_1, identity_matrix(len(If_2)))
+        AFF = matrix_multiply_mod(AFF, transpose_vector(f), self.p_order)
+        get_matrix_dimensions(AFF, "AFF: ")
+        BFF = tensor_product(identity_matrix(len(If_1)), self.AF_2)
+        BFF = matrix_multiply_mod(BFF, transpose_vector(f), self.p_order)
+        get_matrix_dimensions(BFF, "BFF: ")
+        CFF = AFF + BFF
+        get_matrix_dimensions(CFF, "CFF: ")
+        skf = matrix_multiply_mod(WF, CFF, self.p_order)
+        skf = apply_to_matrix(skf, self.g2)
         print("skf", skf)
-        #print("upper", upper)
-        #print("lower", lower)
         
-        return 0
+        return SKF(skf, f, If_1, If_2)
 
     def decrypt(
         self, p=p_order, mpk=None, skF=None, CT_xy=None, n=None, m=None, F=None

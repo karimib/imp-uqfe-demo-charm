@@ -47,8 +47,8 @@ def implementation_check():
     n1_strich = k
     n2_string = k_prime
     f = random_vector(1, 2, k*k_prime)
-    If_1 = [i for i in range(1, k+1)]
-    If_2 = [i for i in range(1, k_prime+1)]
+    If_1 = Iz_1
+    If_2 = Iz_2
     SKF = G.keygen(pp, msk, f, If_1, If_2)
     
 
