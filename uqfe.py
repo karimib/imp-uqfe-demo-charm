@@ -15,6 +15,8 @@ from qfehelpers import (
     get_matrix_dimensions,
     apply_to_vector,
     add_vectors,
+    identity_matrix,
+    transpose_matrix,
     PP,
     MSK,
     CT
@@ -196,8 +198,24 @@ class UQFE:
         wf_2 = [wf_2]
         
         WF = matrix_concat(tensor_product(msk.W_1, wf_1), tensor_product(msk.W_2, wf_2))
-        upper = tensor_product(self.AF_1, )
-        SKf = 
+        get_matrix_dimensions(WF, "WF: ")
+        upper = tensor_product(self.AF_1, matrix_multiply_mod(identity_matrix(len(If_2)), transpose_matrix(f), self.p_order))
+        lower = tensor_product(matrix_multiply_mod(identity_matrix(len(If_1)), transpose_matrix(f), self.p_order), self.AF_2)
+        upper = [element for sublist in upper for element in sublist]
+        lower = [element for sublist in lower for element in sublist]
+        print("upper: ", len(upper))
+        print("lower: ", len(lower))
+        
+        combined = [upper, lower]
+        
+        get_matrix_dimensions(WF, "WF: ")
+        get_matrix_dimensions(combined, "combined: ")
+        skf = matrix_multiply_mod(WF, combined, self.p_order)
+                            
+        print("skf", skf)
+        #print("upper", upper)
+        #print("lower", lower)
+        
         return 0
 
     def decrypt(
