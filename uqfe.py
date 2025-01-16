@@ -126,12 +126,14 @@ class UQFE:
 
     def encrypt(self, pp, msk, z_1, z_2, Iz_1, Iz_2):
         for i_l in Iz_1:
-            a1 = random_vector(1, self.p_order, self.k)
+            #a1 = [2,3,4]
+            a1 = random_vector(1, self.p_order, self.k, seed=i_l)
             self.H_1.append((apply_to_vector(a1, self.g1), apply_to_vector(a1, self.g2)))
             self.A_1.append(a1)
 
         for j_l in Iz_2:
-            a2 = random_vector(1, self.p_order, self.k_prime)
+            #a2 = [4,5,7]
+            a2 = random_vector(1, self.p_order, self.k_prime, seed=j_l)
             self.H_2.append(apply_to_vector(a2, self.g2))
             self.A_2.append(a2)
 
@@ -181,12 +183,16 @@ class UQFE:
 
     def keygen(self, pp, msk, f, If_1, If_2):
         for i_l in If_1:
-            af1 = random_vector(1, self.p_order, self.k)
+            af1 = random_vector(1, self.p_order, self.k, seed=i_l)
+            #af1 = [2,3,4]
             self.HF_1.append((apply_to_vector(af1, self.g1), apply_to_vector(af1, self.g2)))
             self.AF_1.append(af1)
 
+
         for j_l in If_2:
-            af2 = random_vector(1, self.p_order, self.k_prime)
+            # Fixing the seed for testing purposes
+            af2 = random_vector(1, self.p_order, self.k_prime,seed=j_l)
+            #af2 = [4,5,7]
             self.HF_2.append(apply_to_vector(af2, self.g2))
             self.AF_2.append(af2)
         
@@ -215,7 +221,7 @@ class UQFE:
         CFF = AFF + BFF
         #get_matrix_dimensions(CFF, "CFF: ")
         k1 = matrix_multiply_mod(WF, CFF, self.p_order)
-        get_matrix_dimensions(k1, "k1: ")
+        #get_matrix_dimensions(k1, "k1: ")
         sk_plain = SKF(k1, f, If_1, If_2)
         k1 = apply_to_matrix(k1, self.g2)
         sk = SKF(k1, f, If_1, If_2)
@@ -229,30 +235,29 @@ class UQFE:
         
         r0 = tensor_product(self.A_1, identity_matrix(len(ct.Iz_2)))
         r0 = matrix_multiply_mod(r0, transpose_vector(skf.F), self.p_order)
-        get_matrix_dimensions(r0, "r0: ")
+        #get_matrix_dimensions(r0, "r0: ")
         r1 = tensor_product(identity_matrix(len(ct.Iz_1)), self.A_2)
         r1 = matrix_multiply_mod(r1, transpose_vector(skf.F), self.p_order)
-        get_matrix_dimensions(r1, "r1: ")
+        #get_matrix_dimensions(r1, "r1: ")
 
         k2 = r0 + r1
         k2 = [element for sublist in k2 for element in sublist]
-        print("r2: ", k2)
+        #print("r2: ", k2)
         
         k1 = [element for sublist in skf.k1 for element in sublist]
         e1 = dot_product(ct.c_0, k1) % self.p_order
-        print("e1: ", e1)
+        #print("e1: ", e1)
 
         e2 = dot_product(ct.y_0, k2) % self.p_order
-        print("e2: ", e2)
+        #print("e2: ", e2)
 
         e0 = tensor_product_vectors(ct.y_1, ct.y_2)
         e0 = dot_product(e0, skf.F) % self.p_order
-        print("e0: ", e0)
+        #print("e0: ", e0)
         d = self.gt ** e0
         d *= self.gt ** e1
         d *= -(self.gt ** e2)
-        print("d: ", d)
-        print("expected :", self.gt ** 9)
+        #print("d: ", d)
 
         v = 0
         res = self.group.random(GT)

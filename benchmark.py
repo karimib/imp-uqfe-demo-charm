@@ -8,9 +8,14 @@ from qfehelpers import (
 )
 from uqfe import UQFE
 
-k = 3
-k_prime = 3
+k = 12
+k_prime = 12
 lamda = 128
+
+# Benchmarking against
+# k = 2 - 64
+# 
+
 
 
 
@@ -37,25 +42,32 @@ def implementation_check():
         print("W_2: ", msk.W_2)
 
     pencrypt = True
-    z_1 = random_vector(1, 2, k)
-    z_2 = random_vector(1, 2, k_prime)
+    z_1 = random_vector(1, 5, k)
+    z_2 = random_vector(1, 5, k_prime)
     Iz_1 = [i for i in range(1, k+1)]
     Iz_2 = [i for i in range(1, k_prime+1)]
+    print("INPUTS")
+    print("z_1: ", z_1)
+    print("z_2: ", z_2)
+    print("Iz_1: ", Iz_1)
+    print("Iz_2: ", Iz_2)
     CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
     
     pkeygen = True
-    n1_strich = k
-    n2_string = k_prime
     f = random_vector(1, 2, k*k_prime)
     If_1 = Iz_1
     If_2 = Iz_2
+    print("FUNCTION")
+    print("F: ", f)
+    print("If_1: ", If_1)
+    print("If_2: ", If_2)
     skf, skf_plain = G.keygen(pp, msk, f, If_1, If_2)
 
     pdecrypt = True
     print("expected result: ", G.get_expected_result(p_order, z_1, f, z_2))
     v = G.decrypt(pp, skf_plain, CT_Plain)
     
-    #print("v: ", v)
+    print("v: ", v)
     
 
        

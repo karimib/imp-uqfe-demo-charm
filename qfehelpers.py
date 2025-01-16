@@ -417,7 +417,7 @@ def transpose_matrix(matrix):
     return transposed
 
 
-def random_int_matrix(low, high, n, m):
+def random_int_matrix(low, high, n, m, seed=None):
     """
     Generates a matrix of random integers in the range [low, high) with dimensions (n, m).
 
@@ -426,10 +426,13 @@ def random_int_matrix(low, high, n, m):
         high (int): The upper bound (exclusive).
         n (int): Number of rows in the matrix.
         m (int): Number of columns in the matrix.
+        seed (int, optional): Seed for the random number generator.
 
     Returns:
         list[list[int]]: A 2D list (matrix) of random integers.
     """
+    if seed is not None:
+        random.seed(seed)
     return [[random.randint(low, high - 1) for _ in range(m)] for _ in range(n)]
 
 
@@ -445,6 +448,24 @@ def random_vector(low, high, n):
     Returns:
         list[int]: A vector (list) of random integers.
     """
+    return [random.randint(low, high - 1) for _ in range(n)]
+
+
+def random_vector(low, high, n, seed=None):
+    """
+    Generates a random vector with elements from range [low, high).
+
+    Args:
+        low (int): The lower bound (inclusive).
+        high (int): The upper bound (exclusive).
+        n (int): The size of the vector.
+        seed (int, optional): Seed for the random number generator.
+
+    Returns:
+        list[int]: A vector (list) of random integers.
+    """
+    if seed is not None:
+        random.seed(seed)
     return [random.randint(low, high - 1) for _ in range(n)]
 
 
