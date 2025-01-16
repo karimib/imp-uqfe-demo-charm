@@ -14,7 +14,7 @@ lamda = 128
 
 # Benchmarking against
 # k = 2 - 64
-# 
+# lamda = 128, 256, 512, 1024
 
 
 
@@ -66,14 +66,10 @@ def implementation_check():
     pdecrypt = True
     print("expected result: ", G.get_expected_result(p_order, z_1, f, z_2))
     v = G.decrypt(pp, skf_plain, CT_Plain)
-    
     print("v: ", v)
     
 
        
-    
-
-
 
 # Inputs, Ciphertexts size, How expensive are the single steps
 # Presentation
