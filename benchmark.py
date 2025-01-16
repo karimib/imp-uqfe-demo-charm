@@ -41,7 +41,7 @@ def implementation_check():
     z_2 = random_vector(1, 2, k_prime)
     Iz_1 = [i for i in range(1, k+1)]
     Iz_2 = [i for i in range(1, k_prime+1)]
-    CT = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+    CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
     
     pkeygen = True
     n1_strich = k
@@ -49,7 +49,13 @@ def implementation_check():
     f = random_vector(1, 2, k*k_prime)
     If_1 = Iz_1
     If_2 = Iz_2
-    SKF = G.keygen(pp, msk, f, If_1, If_2)
+    skf, skf_plain = G.keygen(pp, msk, f, If_1, If_2)
+
+    pdecrypt = True
+    print("expected result: ", G.get_expected_result(p_order, z_1, f, z_2))
+    v = G.decrypt(pp, skf_plain, CT_Plain)
+    
+    #print("v: ", v)
     
 
        

@@ -2,6 +2,7 @@ import secrets
 import hmac
 import hashlib
 from charm.toolbox.pairinggroup import PairingGroup, G1, G2, GT
+from charm.core.math.pairing import pair
 from qfehelpers import (
     apply_to_matrix,
     tensor_product,
@@ -19,6 +20,8 @@ from qfehelpers import (
     transpose_matrix,
     transpose_vector,
     tensor_product_matrix_vector,
+    tensor_product_vectors,
+    dot_product,
     PP,
     MSK,
     SKF,
@@ -157,23 +160,24 @@ class UQFE:
         c0 = vector_matrix_multiply_mod(s_0, self.A_0, self.p_order)
         y0 = vector_matrix_multiply_mod(s_0, A_0_W, self.p_order)
         t0 = tensor_product([s_1], [z_2])
-        print("y0: ", y0)
-        print("t0: ", t0)
+        #print("y0: ", y0)
+        #print("t0: ", t0)
         t1 = tensor_product([y1], [s_2])
-        print("t1: ", t1)
+        #print("t1: ", t1)
         t2 = matrix_concat(t0,t1)
-        print("t2: ", t2)
+        #print("t2: ", t2)
         t2 = [element for sublist in t2 for element in sublist]
         y0 = add_vectors(y0, t2)
-        print(y0)
+        #print(y0)
 
+        ct_plain = CT(y1, y2, c0, y0, Iz_1, Iz_2)
         y1 = apply_to_vector(y1, self.g1)
         y2 = apply_to_vector(y2, self.g2)
         c0 = apply_to_vector(c0, self.g1)
         y0 = apply_to_vector(y0, self.g1)
 
         ct = CT(y1, y2, c0, y0, Iz_1, Iz_2)
-        return ct
+        return ct, ct_plain
 
     def keygen(self, pp, msk, f, If_1, If_2):
         for i_l in If_1:
@@ -196,29 +200,70 @@ class UQFE:
 
       
         t0 = tensor_product_matrix_vector(msk.W_1, wf_1)
-        get_matrix_dimensions(t0, "t0: ")
+        #get_matrix_dimensions(t0, "t0: ")
         t1 = tensor_product_matrix_vector(msk.W_2, wf_2)
-        get_matrix_dimensions(t1, "t1: ")
+        #get_matrix_dimensions(t1, "t1: ")
         WF = matrix_concat(t0,t1)
-        get_matrix_dimensions(WF, "WF: ")
+        #get_matrix_dimensions(WF, "WF: ")
 
         AFF = tensor_product(self.AF_1, identity_matrix(len(If_2)))
         AFF = matrix_multiply_mod(AFF, transpose_vector(f), self.p_order)
-        get_matrix_dimensions(AFF, "AFF: ")
+        #get_matrix_dimensions(AFF, "AFF: ")
         BFF = tensor_product(identity_matrix(len(If_1)), self.AF_2)
         BFF = matrix_multiply_mod(BFF, transpose_vector(f), self.p_order)
-        get_matrix_dimensions(BFF, "BFF: ")
+        #get_matrix_dimensions(BFF, "BFF: ")
         CFF = AFF + BFF
-        get_matrix_dimensions(CFF, "CFF: ")
-        skf = matrix_multiply_mod(WF, CFF, self.p_order)
-        skf = apply_to_matrix(skf, self.g2)
-        print("skf", skf)
+        #get_matrix_dimensions(CFF, "CFF: ")
+        k1 = matrix_multiply_mod(WF, CFF, self.p_order)
+        get_matrix_dimensions(k1, "k1: ")
+        sk_plain = SKF(k1, f, If_1, If_2)
+        k1 = apply_to_matrix(k1, self.g2)
+        sk = SKF(k1, f, If_1, If_2)
         
-        return SKF(skf, f, If_1, If_2)
+        return sk, sk_plain
 
-    def decrypt(
-        self, p=p_order, mpk=None, skF=None, CT_xy=None, n=None, m=None, F=None
-    ):
+    def decrypt(self, pp, skf, ct):
+        if (ct.Iz_1 != skf.If_1) or (ct.Iz_2 != skf.If_2):
+            print("Error: The ciphertext and the secret key are not compatible")
+            return None
         
+        r0 = tensor_product(self.A_1, identity_matrix(len(ct.Iz_2)))
+        r0 = matrix_multiply_mod(r0, transpose_vector(skf.F), self.p_order)
+        get_matrix_dimensions(r0, "r0: ")
+        r1 = tensor_product(identity_matrix(len(ct.Iz_1)), self.A_2)
+        r1 = matrix_multiply_mod(r1, transpose_vector(skf.F), self.p_order)
+        get_matrix_dimensions(r1, "r1: ")
+
+        k2 = r0 + r1
+        k2 = [element for sublist in k2 for element in sublist]
+        print("r2: ", k2)
+        
+        k1 = [element for sublist in skf.k1 for element in sublist]
+        e1 = dot_product(ct.c_0, k1) % self.p_order
+        print("e1: ", e1)
+
+        e2 = dot_product(ct.y_0, k2) % self.p_order
+        print("e2: ", e2)
+
+        e0 = tensor_product_vectors(ct.y_1, ct.y_2)
+        e0 = dot_product(e0, skf.F) % self.p_order
+        print("e0: ", e0)
+        d = self.gt ** e0
+        d *= self.gt ** e1
+        d *= -(self.gt ** e2)
+        print("d: ", d)
+        print("expected :", self.gt ** 9)
+
+        v = 0
+        res = self.group.random(GT)
+        while d != res and v < self.p_order:
+            v += 1
+            res = self.gt ** int(v)
 
         return v
+
+
+    def get_expected_result(self, p_order, z_1, f, z_2):
+        res = tensor_product_vectors(z_1, z_2)
+        res = dot_product(res, f) % p_order
+        return res

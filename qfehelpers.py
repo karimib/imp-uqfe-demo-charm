@@ -30,13 +30,13 @@ class MSK:
 
 
 class SKF:
-    SK = None
+    k1 = None
     F = None
     If_1 = None
     If_2 = None
 
-    def __init__(self, SK, F, If_1, If_2):
-        self.SK = SK
+    def __init__(self, k1, F, If_1, If_2):
+        self.k1 = k1
         self.F = F
         self.If_1 = If_1
         self.If_2 = If_2
@@ -108,6 +108,7 @@ def apply_to_matrix(matrix, g):
         list of list of any: A new matrix with the function applied to each element.
     """
     return [[g ** value for value in row] for row in matrix]
+
 
 def apply_to_vector(vector, g):
     """
@@ -649,4 +650,22 @@ def tensor_product_matrix_vector(matrix, vector):
             for k in range(len_vector):
                 result[i][j * len_vector + k] = matrix[i][j] * vector[k]
     
+    return result
+
+
+def tensor_product_vectors(vector1, vector2):
+    """
+    Compute the tensor product (Kronecker product) of two vectors.
+    
+    Args:
+    vector1 (list of int/float): The first vector
+    vector2 (list of int/float): The second vector
+    
+    Returns:
+    list of int/float: Tensor product of the two vectors
+    """
+    result = []
+    for v1 in vector1:
+        for v2 in vector2:
+            result.append(v1 * v2)
     return result
