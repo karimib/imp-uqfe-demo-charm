@@ -2,6 +2,7 @@ import random
 import secrets
 import hmac
 import hashlib
+import sys
 
 
 class PP:
@@ -16,13 +17,14 @@ class PP:
         self.A_0_W_1_G_1 = A_0_W_1_G_1
         self.A_0_W_2_G_1 = A_0_W_2_G_1
 
+
 class MSK:
     K_1 = None
     K_2 = None
     W_1 = None
     W_2 = None
 
-    def __init__(self, K_1,K_2,W_1,W_2):
+    def __init__(self, K_1, K_2, W_1, W_2):
         self.K_1 = K_1
         self.K_2 = K_2
         self.W_1 = W_1
@@ -59,18 +61,16 @@ class CT:
         self.Iz_2 = Iz_2
 
 
-
-
 def pseudo_random_function(key, integer):
     # Convert the integer to bytes
-    integer_bytes = integer.to_bytes((integer.bit_length() + 7) // 8, byteorder='big')
-    
+    integer_bytes = integer.to_bytes((integer.bit_length() + 7) // 8, byteorder="big")
+
     # Create an HMAC object using the key and SHA-256
     hmac_obj = hmac.new(key, integer_bytes, hashlib.sha3_256)
-    
+
     # Get the digest and convert it to an integer
-    prf_output = int.from_bytes(hmac_obj.digest(), byteorder='big')
-    
+    prf_output = int.from_bytes(hmac_obj.digest(), byteorder="big")
+
     return prf_output
 
 
@@ -107,7 +107,7 @@ def apply_to_matrix(matrix, g):
     Returns:
         list of list of any: A new matrix with the function applied to each element.
     """
-    return [[g ** value for value in row] for row in matrix]
+    return [[g**value for value in row] for row in matrix]
 
 
 def apply_to_vector(vector, g):
@@ -121,7 +121,7 @@ def apply_to_vector(vector, g):
     Returns:
         list of list of any: A new matrix with the function applied to each element.
     """
-    return [g ** value for value in vector]
+    return [g**value for value in vector]
 
 
 def vector_multiply_mod(vector1, vector2, p):
@@ -159,7 +159,11 @@ def matrix_multiply_mod(A, B, p):
         list[list[int]]: The resulting matrix after multiplication under modulo p.
     """
     if len(A[0]) != len(B):
-        raise ValueError("Number of columns in A must match number of rows in B", get_matrix_dimensions(A, "A: "), get_matrix_dimensions(B, "B: "))
+        raise ValueError(
+            "Number of columns in A must match number of rows in B",
+            get_matrix_dimensions(A, "A: "),
+            get_matrix_dimensions(B, "B: "),
+        )
 
     # Initialize the result matrix with zeros
     result = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
@@ -570,18 +574,19 @@ def tensor_product(A, B):
     # Get the dimensions of A and B
     m, n = len(A), len(A[0])  # A is m x n
     p, q = len(B), len(B[0])  # B is p x q
-    
+
     # Initialize the resulting tensor product matrix
     result = [[0] * (n * q) for _ in range(m * p)]
-    
+
     # Fill the resulting matrix
     for i in range(m):
         for j in range(n):
             for k in range(p):
                 for l in range(q):
                     result[i * p + k][j * q + l] = A[i][j] * B[k][l]
-    
+
     return result
+
 
 def matrix_concat(A, B):
     """
@@ -620,10 +625,10 @@ def add_vectors(vector_a, vector_b):
 def get_matrix_dimensions(matrix, mat):
     """
     Get the dimensions of a matrix.
-    
+
     Args:
     matrix (list of list of int/float): The matrix
-    
+
     Returns:
     tuple: A tuple containing the number of rows and columns (rows, cols)
     """
@@ -634,7 +639,8 @@ def get_matrix_dimensions(matrix, mat):
     print("Matrix: ", mat)
     print("rows: ", rows)
     print("cols: ", cols)
-    
+
+
 def identity_matrix(n):
     """
     Creates an n x n identity matrix in the form of a list of lists.
@@ -652,36 +658,36 @@ def identity_matrix(n):
 def tensor_product_matrix_vector(matrix, vector):
     """
     Compute the tensor product (Kronecker product) of a matrix and a vector.
-    
+
     Args:
     matrix (list of list of int/float): The matrix
     vector (list of int/float): The vector
-    
+
     Returns:
     list of list of int/float: Tensor product of the matrix and the vector
     """
     rows_matrix, cols_matrix = len(matrix), len(matrix[0])
     len_vector = len(vector)
-    
+
     # Initialize the result matrix with zeros
     result = [[0] * (cols_matrix * len_vector) for _ in range(rows_matrix)]
-    
+
     for i in range(rows_matrix):
         for j in range(cols_matrix):
             for k in range(len_vector):
                 result[i][j * len_vector + k] = matrix[i][j] * vector[k]
-    
+
     return result
 
 
 def tensor_product_vectors(vector1, vector2):
     """
     Compute the tensor product (Kronecker product) of two vectors.
-    
+
     Args:
     vector1 (list of int/float): The first vector
     vector2 (list of int/float): The second vector
-    
+
     Returns:
     list of int/float: Tensor product of the two vectors
     """
@@ -690,3 +696,19 @@ def tensor_product_vectors(vector1, vector2):
         for v2 in vector2:
             result.append(v1 * v2)
     return result
+
+
+def size_in_kilobits(parameter):
+    """
+    Calculate the size of a parameter in kilobits.
+
+    Args:
+    parameter: The parameter whose size is to be calculated
+
+    Returns:
+    float: Size of the parameter in kilobits
+    """
+    size_in_bytes = sys.getsizeof(parameter)
+    size_in_bits = size_in_bytes * 8
+    size_in_kilobits = size_in_bits / 1024
+    return size_in_kilobits
