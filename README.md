@@ -42,3 +42,26 @@ Mount a volume to save benchmark csv
 ````shell
 docker run -v "${PWD}/results:/data" uqfedemo:v1 
 ````
+
+## Benchmarking
+
+The [benchmark.py](./benchmark.py) file contains two methods for benchmarking
+
+| Method | Description |
+| --- | --- |
+| simulation_fixed_vectors() | Simulation with small vector values that are between 1 and 3 and increasing value k and increasing vector lengths m and n |
+| simulation_fixed_k() | Simulation with a fixed k value and fixed vector lengths but with vector values between 1 and p |
+
+to run them you have to uncomment line 244 and line 245 and build a new image as follows:
+
+Build the image
+
+```shell
+docker build -t uqfedemo:v1 .
+```
+
+Then mount a volume to save the benchmark csv to your disk: 
+
+````shell
+docker run -v "${PWD}/results:/data" uqfedemo:v1 
+````
