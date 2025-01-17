@@ -12,6 +12,7 @@ g1.initPP()
 g2 = group.random(G2)
 g2.initPP()
 gt = group.pair_prod(g1, g2)
+gt.initPP()
 
 
 def implementation_check():
