@@ -89,7 +89,7 @@ def simulation_fixed_vectors():
         setup_time = time.time() - start_time
 
         start_time = time.time()
-        CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+        CT, CT_plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
         encrypt_time = time.time() - start_time
 
         start_time = time.time()
@@ -97,7 +97,7 @@ def simulation_fixed_vectors():
         keygen_time = time.time() - start_time
 
         start_time = time.time()
-        v = G.decrypt(pp, skf_plain, CT_Plain)
+        v = G.decrypt(pp, skf_plain, CT_plain)
         decrypt_time = time.time() - start_time
 
         setup_time *= 1_000_000_000
@@ -106,9 +106,9 @@ def simulation_fixed_vectors():
         decrypt_time *= 1_000_000_000
         total_time = setup_time + keygen_time + encrypt_time + decrypt_time
 
-        expected = G.get_expected_result(p_order, z_1, f, z_2)
-        print("expected result: ", expected)
-        print("calculated result: ", v)
+        #expected = G.get_expected_result(p_order, z_1, f, z_2)
+        #print("expected result: ", expected)
+        #print("calculated result: ", v)
         s_msk = size_in_kilobits(msk)
         s_pp = size_in_kilobits(pp)
         s_ct = size_in_kilobits(CT)
@@ -131,7 +131,7 @@ def simulation_fixed_vectors():
         )
 
     with open(
-        "data/uqfe_benchmark_fixed_vectors_sizes.csv", "w", newline=""
+        "data/uqfe_benchmark_fixed_vectors_sizes_2.csv", "w", newline=""
     ) as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
@@ -242,6 +242,6 @@ def simulation_p_vectors():
         csvwriter.writerows(results)
 
 
-# simulation_fixed_vectors()
+simulation_fixed_vectors()
 # simulation_p_vectors()
-implementation_check()
+#implementation_check()
