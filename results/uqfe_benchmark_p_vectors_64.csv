@@ -1,0 +1,2 @@
+k,k_prime,lamda,size msk,size pp,size ct,size sk,time setup,time keygen,time encrypt,time decrypt,time total
+32,32,128,0.4375,0.4375,0.4375,0.4375,337204933.1665039,18017154216.766357,7923111915.588379,16544717311.85913,42822188377.38037
