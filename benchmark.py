@@ -2,7 +2,7 @@ from charm.toolbox.pairinggroup import PairingGroup, G1, G2
 import time
 import csv
 from qfehelpers import random_vector, size_in_kilobits
-from uqfe import UQFE
+from uqfer import UQFE
 
 
 group = PairingGroup("BN254")
@@ -16,9 +16,17 @@ gt.initPP()
 
 
 def implementation_check():
-    k = 3
-    k_prime = 3
+    k = 64
+    k_prime = 64
     lamda = 128
+    
+    pparam = True
+    if pparam:
+        print("PARAMETERS")
+        print("k: ", k)
+        print("k_prime: ", k_prime)
+        print("lamda: ", lamda)
+        
     G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
     pp, msk = G.setup(p_order)
 
@@ -32,15 +40,18 @@ def implementation_check():
         print("W_1: ", msk.W_1)
         print("W_2: ", msk.W_2)
 
-    n1 = k
-    n2 = k_prime
-    z_1 = [1,1,1]
-    z_2 = [1,1,1]
+    n1 = 100
+    n2 = 100
+    z_1 = random_vector(0, 2, n1)
+    z_2 = random_vector(0, 2, n2)
     Iz_1 = [i for i in range(1, n1 + 1)]
     Iz_2 = [i for i in range(1, n2 + 1)]
+    
     pencrypt = True
     if pencrypt:
         print("INPUTS")
+        print("n1: ", n1)
+        print("n2: ", n2)
         print("z_1: ", z_1)
         print("z_2: ", z_2)
         print("Iz_1: ", Iz_1)
@@ -75,18 +86,22 @@ def simulation_fixed_vectors():
         k = k
         k_prime = k
         G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
-
-        z_1 = random_vector(1, z_1_max, k)
-        z_2 = random_vector(1, z_2_max, k_prime)
-        Iz_1 = [i for i in range(1, k + 1)]
-        Iz_2 = [i for i in range(1, k_prime + 1)]
-        f = random_vector(1, f_max, k * k_prime)
-        If_1 = Iz_1
-        If_2 = Iz_2
+        
+        
 
         start_time = time.time()
         pp, msk = G.setup(p_order)
         setup_time = time.time() - start_time
+        
+        n1 = 4
+        n2 = 4
+        z_1 = random_vector(0, z_1_max, n1)
+        z_2 = random_vector(0, z_2_max, n2)
+        Iz_1 = [i for i in range(1, n1 + 1)]
+        Iz_2 = [i for i in range(1, n2 + 1)]
+        f = random_vector(1, f_max, n1 * n2)
+        If_1 = Iz_1
+        If_2 = Iz_2
 
         start_time = time.time()
         CT, CT_plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
@@ -131,7 +146,7 @@ def simulation_fixed_vectors():
         )
 
     with open(
-        "data/uqfe_benchmark_fixed_vectors_sizes_2.csv", "w", newline=""
+        "data/uqfe_benchmark_fixed_vectors_sizes_.csv", "w", newline=""
     ) as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
@@ -157,71 +172,73 @@ def simulation_fixed_vectors():
 def simulation_p_vectors():
     results = []
     lamda = 128
-    z_1_max = p_order
-    z_2_max = p_order
-    f_max = p_order
+    z_1_max = 2
+    z_2_max = 2
+    f_max = 2
 
-    for k in range(3, 4):
-        k = k
-        k_prime = k
-        G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
+    
+    k = 32
+    k_prime = 32
+    G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
 
-        z_1 = random_vector(1, z_1_max, k)
-        z_2 = random_vector(1, z_2_max, k_prime)
-        Iz_1 = [i for i in range(1, k + 1)]
-        Iz_2 = [i for i in range(1, k_prime + 1)]
-        f = random_vector(1, f_max, k * k_prime)
-        If_1 = Iz_1
-        If_2 = Iz_2
+    n1 = 200
+    n2 = n1
+    z_1 = random_vector(0, z_1_max, n1)
+    z_2 = random_vector(0, z_2_max, n2)
+    Iz_1 = [i for i in range(1, n1 + 1)]
+    Iz_2 = [i for i in range(1, n2 + 1)]
+    f = random_vector(1, f_max, n1 * n2)
+    If_1 = Iz_1
+    If_2 = Iz_2
 
-        start_time = time.time()
-        pp, msk = G.setup(p_order)
-        setup_time = time.time() - start_time
+    start_time = time.time()
+    pp, msk = G.setup(p_order)
+    setup_time = time.time() - start_time
 
-        start_time = time.time()
-        CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
-        encrypt_time = time.time() - start_time
+    start_time = time.time()
+    CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+    encrypt_time = time.time() - start_time
 
-        start_time = time.time()
-        skf, skf_plain = G.keygen(pp, msk, f, If_1, If_2)
-        keygen_time = time.time() - start_time
+    start_time = time.time()
+    skf, skf_plain = G.keygen(pp, msk, f, If_1, If_2)
+    keygen_time = time.time() - start_time
 
-        start_time = time.time()
-        v = G.decrypt(pp, skf_plain, CT_Plain)
-        decrypt_time = time.time() - start_time
+    start_time = time.time()
+    v = G.decrypt(pp, skf_plain, CT_Plain)
+    decrypt_time = time.time() - start_time
 
-        setup_time *= 1_000_000_000
-        keygen_time *= 1_000_000_000
-        encrypt_time *= 1_000_000_000
-        decrypt_time *= 1_000_000_000
-        total_time = setup_time + keygen_time + encrypt_time + decrypt_time
+    setup_time *= 1_000_000_000
+    keygen_time *= 1_000_000_000
+    encrypt_time *= 1_000_000_000
+    decrypt_time *= 1_000_000_000
+    total_time = setup_time + keygen_time + encrypt_time + decrypt_time
 
-        expected = G.get_expected_result(p, x, F, y)
-        print("expected result: ", expected)
-        print("calculated result: ", v)
-        s_msk = size_in_kilobits(msk)
-        s_pp = size_in_kilobits(pp)
-        s_ct = size_in_kilobits(CT)
-        s_sk = size_in_kilobits(skf)
+    expected = G.get_expected_result(p_order, z_1, f, z_2)
+    print("expected result: ", expected)
+    print("calculated result: ", v)
+    s_msk = size_in_kilobits(msk)
+    s_pp = size_in_kilobits(pp)
+    s_ct = size_in_kilobits(CT)
+    s_sk = size_in_kilobits(skf)
 
-        results.append(
-            [
-                k,
-                k_prime,
-                lamda,
-                s_msk,
-                s_pp,
-                s_ct,
-                s_sk,
-                setup_time,
-                keygen_time,
-                encrypt_time,
-                decrypt_time,
-                total_time,
-            ]
-        )
+    results.append(
+        [
+            k,
+            k_prime,
+            lamda,
+            s_msk,
+            s_pp,
+            s_ct,
+            s_sk,
+            setup_time,
+            keygen_time,
+            encrypt_time,
+            decrypt_time,
+            total_time,
+        ]
+    )
 
-    with open("data/uqfe_benchmark_p_vectors.csv", "w", newline="") as csvfile:
+    with open("data/uqfe_benchmark_p_vectors_200.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
             [
@@ -242,6 +259,6 @@ def simulation_p_vectors():
         csvwriter.writerows(results)
 
 
-simulation_fixed_vectors()
-# simulation_p_vectors()
+#simulation_fixed_vectors()
+simulation_p_vectors()
 #implementation_check()
