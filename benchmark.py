@@ -180,8 +180,13 @@ def simulation_p_vectors():
     k = 4
     k_prime = 4
     G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
-    message_length = [16,32,64,128]
-    for l in message_length:
+
+    start_time = time.time()
+    pp, msk = G.setup(p_order)
+    setup_time = time.time() - start_time
+    setup_time *= 1_000_000_000
+    
+    for l in range(3,65):
         n1 = l
         n2 = n1
         z_1 = random_vector(0, z_1_max, n1)
@@ -191,10 +196,6 @@ def simulation_p_vectors():
         f = random_vector(1, f_max, n1 * n2)
         If_1 = Iz_1
         If_2 = Iz_2
-
-        start_time = time.time()
-        pp, msk = G.setup(p_order)
-        setup_time = time.time() - start_time
 
         start_time = time.time()
         CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
@@ -208,7 +209,7 @@ def simulation_p_vectors():
         v = G.decrypt(pp, skf_plain, CT_Plain)
         decrypt_time = time.time() - start_time
 
-        setup_time *= 1_000_000_000
+        
         keygen_time *= 1_000_000_000
         encrypt_time *= 1_000_000_000
         decrypt_time *= 1_000_000_000
@@ -241,7 +242,7 @@ def simulation_p_vectors():
             ]
         )
 
-    with open("data/uqfe_benchmark_message_lengths}.csv", "w", newline="") as csvfile:
+    with open("data/uqfe_benchmark_message_lengths_range.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
             [   "n1",
