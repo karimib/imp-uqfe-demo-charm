@@ -188,7 +188,7 @@ def simulation_p_vectors():
     results = []
      
     # lenght of the key for the PRF in bytes
-    lamda = 128
+    lamda = 16
     z_1_max = 2
     z_2_max = 2
     f_max = 2
