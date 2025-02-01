@@ -1,7 +1,7 @@
 from charm.toolbox.pairinggroup import PairingGroup, G1, G2
 import time
 import csv
-from qfehelpers import random_vector, size_in_kilobits
+from qfehelpers import random_vector, pp_size_bit, msk_size_bit, ct_size_bit, skf_size_bit
 from uqfer import UQFE
 
 
@@ -16,9 +16,11 @@ gt.initPP()
 
 
 def implementation_check():
-    k = 64
-    k_prime = 64
-    lamda = 128
+    k = 4
+    k_prime = 4 
+     # lenght of the key for the PRF in bytes
+    lamda = 16
+
     
     pparam = True
     if pparam:
@@ -47,7 +49,7 @@ def implementation_check():
     Iz_1 = [i for i in range(1, n1 + 1)]
     Iz_2 = [i for i in range(1, n2 + 1)]
     
-    pencrypt = True
+    pencrypt = False
     if pencrypt:
         print("INPUTS")
         print("n1: ", n1)
@@ -57,11 +59,12 @@ def implementation_check():
         print("Iz_1: ", Iz_1)
         print("Iz_2: ", Iz_2)
     CT, CT_plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+    
 
     f = random_vector(1, 2, n1 * n2)
     If_1 = Iz_1
     If_2 = Iz_2
-    pkeygen = True
+    pkeygen = False
     if pkeygen:
         print("FUNCTION")
         print("F: ", f)
@@ -72,12 +75,24 @@ def implementation_check():
     v = G.decrypt(pp, skf_plain, CT_plain)
     print("expected result: ", G.get_expected_result(p_order, z_1, f, z_2))
     print("v: ", v)
+    
+    s_pp = pp_size_bit(group, pp) / 1024
+    s_msk= msk_size_bit(group, msk) / 1024
+    s_ct = ct_size_bit(group, CT) / 1024
+    s_skf = skf_size_bit(group, skf) / 1024
+
+    print("pp size in kbits: ", s_pp)
+    print("msk size in kbits: ", s_msk)
+    print("ct size in kbits: ", s_ct)
+    print("skf size in kbits: ", s_skf)
+
 
 
 # Simulation of the UQFE scheme with vectors of increasing length k and small values
 def simulation_fixed_vectors():
     results = []
-    lamda = 128
+    # lenght of the key for the PRF in bytes
+    lamda = 16
     z_1_max = 3
     z_2_max = 2
     f_max = 2
@@ -124,10 +139,10 @@ def simulation_fixed_vectors():
         #expected = G.get_expected_result(p_order, z_1, f, z_2)
         #print("expected result: ", expected)
         #print("calculated result: ", v)
-        s_msk = size_in_kilobits(msk)
-        s_pp = size_in_kilobits(pp)
-        s_ct = size_in_kilobits(CT)
-        s_sk = size_in_kilobits(skf)
+        s_pp = pp_size_bit(group, pp) / 1024
+        s_msk= msk_size_bit(group, msk) / 1024
+        s_ct = ct_size_bit(group, CT) / 1024
+        s_sk = skf_size_bit(group, skf) / 1024
         results.append(
             [
                 k,
@@ -146,7 +161,7 @@ def simulation_fixed_vectors():
         )
 
     with open(
-        "data/uqfe_benchmark_fixed_vectors_sizes_.csv", "w", newline=""
+        "data/uqfe_benchmark_fixed_vectors_sizes_variable_k.csv", "w", newline=""
     ) as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
@@ -171,6 +186,8 @@ def simulation_fixed_vectors():
 # Simulation of the UQFE scheme with vectors of fixed length k with values between 1 and p_order
 def simulation_p_vectors():
     results = []
+     
+    # lenght of the key for the PRF in bytes
     lamda = 128
     z_1_max = 2
     z_2_max = 2
@@ -218,10 +235,10 @@ def simulation_p_vectors():
         expected = G.get_expected_result(p_order, z_1, f, z_2)
         print("expected result: ", expected)
         print("calculated result: ", v)
-        s_msk = size_in_kilobits(msk)
-        s_pp = size_in_kilobits(pp)
-        s_ct = size_in_kilobits(CT)
-        s_sk = size_in_kilobits(skf)
+        s_pp = pp_size_bit(group, pp) / 1024
+        s_msk= msk_size_bit(group, msk) / 1024
+        s_ct = ct_size_bit(group, CT) / 1024
+        s_sk = skf_size_bit(group, skf) / 1024
 
         results.append(
             [
@@ -265,5 +282,5 @@ def simulation_p_vectors():
 
 
 #simulation_fixed_vectors()
-simulation_p_vectors()
+#simulation_p_vectors()
 #implementation_check()
