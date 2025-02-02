@@ -280,7 +280,104 @@ def simulation_p_vectors():
         )
         csvwriter.writerows(results)
 
+def simulation_message_length():
+    results = []
+     
+    # lenght of the key for the PRF in bytes
+    lamda = 16
+    z_1_max = 2
+    z_2_max = 2
+    f_max = 2
+
+    
+    k = 4
+    k_prime = 4
+    G = UQFE(group, p_order, g1, g2, gt, k, k_prime, lamda)
+
+    start_time = time.time()
+    pp, msk = G.setup(p_order)
+    setup_time = time.time() - start_time
+    setup_time *= 1_000_000_000
+    for l in range(3, 65):
+        n1 = l
+        n2 = n1
+        z_1 = random_vector(0, z_1_max, n1)
+        z_2 = random_vector(0, z_2_max, n2)
+        Iz_1 = [i for i in range(1, n1 + 1)]
+        Iz_2 = [i for i in range(1, n2 + 1)]
+        f = random_vector(1, f_max, n1 * n2)
+        If_1 = Iz_1
+        If_2 = Iz_2
+
+        start_time = time.time()
+        CT, CT_Plain = G.encrypt(pp, msk, z_1, z_2, Iz_1, Iz_2)
+        encrypt_time = time.time() - start_time
+
+        start_time = time.time()
+        skf, skf_plain = G.keygen(pp, msk, f, If_1, If_2)
+        keygen_time = time.time() - start_time
+
+        start_time = time.time()
+        v = G.decrypt(pp, skf_plain, CT_Plain)
+        decrypt_time = time.time() - start_time
+
+        
+        keygen_time *= 1_000_000_000
+        encrypt_time *= 1_000_000_000
+        decrypt_time *= 1_000_000_000
+        total_time = setup_time + keygen_time + encrypt_time + decrypt_time
+
+        # Speed up benchmarking
+        #expected = G.get_expected_result(p_order, z_1, f, z_2)
+        #print("expected result: ", expected)
+        #print("calculated result: ", v)
+        s_pp = pp_size_bit(group, pp) / 1024
+        s_msk= msk_size_bit(group, msk) / 1024
+        s_ct = ct_size_bit(group, CT) / 1024
+        s_sk = skf_size_bit(group, skf) / 1024
+
+        results.append(
+            [
+                n1,
+                n2,
+                k,
+                k_prime,
+                lamda,
+                s_msk,
+                s_pp,
+                s_ct,
+                s_sk,
+                setup_time,
+                keygen_time,
+                encrypt_time,
+                decrypt_time,
+                total_time,
+            ]
+        )
+
+    with open("data/uqfe_benchmark_message_length_3_65.csv", "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(
+            [   "n1",
+                "n2",
+                "k",
+                "k_prime",
+                "lamda",
+                "size msk",
+                "size pp",
+                "size ct",
+                "size sk",
+                "time setup",
+                "time keygen",
+                "time encrypt",
+                "time decrypt",
+                "time total",
+            ]
+        )
+        csvwriter.writerows(results)
+
 
 #simulation_fixed_vectors()
 #simulation_p_vectors()
 #implementation_check()
+simulation_message_length()
