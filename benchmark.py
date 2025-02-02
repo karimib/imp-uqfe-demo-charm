@@ -298,7 +298,9 @@ def simulation_message_length():
     pp, msk = G.setup(p_order)
     setup_time = time.time() - start_time
     setup_time *= 1_000_000_000
-    for l in range(3, 65):
+    length = [100, 200]
+    #for l in range(3, 65):
+    for l in length: 
         n1 = l
         n2 = n1
         z_1 = random_vector(0, z_1_max, n1)
@@ -355,7 +357,7 @@ def simulation_message_length():
             ]
         )
 
-    with open("data/uqfe_benchmark_message_length_3_65.csv", "w", newline="") as csvfile:
+    with open("data/uqfe_benchmark_message_length_100_200.csv", "w", newline="") as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow(
             [   "n1",
