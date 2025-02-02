@@ -15,6 +15,6 @@ COPY ./test_qfehelpers.py .
 RUN python3 test_qfehelpers.py
 
 FROM testing AS final 
-COPY ./uqfe.py .
+COPY ./uqfer.py .
 COPY ./benchmark.py .
 CMD ["python3", "benchmark.py"]

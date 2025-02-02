@@ -2,7 +2,6 @@ import random
 import secrets
 import hmac
 import hashlib
-import sys
 
 
 class PP:
@@ -109,6 +108,26 @@ def apply_to_matrix(matrix, g):
     """
     return [[g**value for value in row] for row in matrix]
 
+def bit_size_matrix(matrix):
+    """
+    Applies a function to every element in a matrix.
+
+    Args:
+        matrix (list of list of any): The input matrix.
+        func (callable): A function to apply to each element of the matrix.
+
+    Returns:
+        list of list of any: A new matrix with the function applied to each element.
+    """
+    sum = 0
+    for row in matrix:
+        for value in row:
+            sum += value.bit_length()
+    
+    return sum
+
+
+
 
 def apply_to_vector(vector, g):
     """
@@ -122,6 +141,53 @@ def apply_to_vector(vector, g):
         list of list of any: A new matrix with the function applied to each element.
     """
     return [g**value for value in vector]
+
+def bit_size_vector(vector):
+    """
+    Applies a function to every element in a matrix.
+
+    Args:
+        matrix (list of list of any): The input matrix.
+        func (callable): A function to apply to each element of the matrix.
+
+    Returns:
+        list of list of any: A new matrix with the function applied to each element.
+    """
+    sum = 0
+    for value in vector:
+            sum += value.bit_length()
+    
+    return sum
+
+# Compute size of group element encoded as base64
+# Source: https://stackoverflow.com/questions/46832402/how-can-i-compute-the-size-in-bits-of-group-elements-in-charm-crypto
+def compute_bitsize(base64_input):
+    b_padded = base64_input.split(str.encode(":"))[1]
+    pad_size = b_padded.count(str.encode("="))
+    b_len_without_pad = len(b_padded)-4
+    byte_len = (b_len_without_pad *3)/4 +(3-pad_size)-1
+    bit_len = byte_len * 8
+    return bit_len
+
+
+def bit_size_matrix_group(group, matrix):
+    sum = 0
+    for row in matrix:
+        for value in row:
+            b64value = group.serialize(value)
+            sum += compute_bitsize(b64value)
+
+    return sum
+
+
+def bit_size_vector_group(group, vector):
+    sum = 0
+    for value in vector:
+        b64value = group.serialize(value)
+        sum += compute_bitsize(b64value)
+
+    return sum
+
 
 
 def vector_multiply_mod(vector1, vector2, p):
@@ -698,17 +764,15 @@ def tensor_product_vectors(vector1, vector2):
     return result
 
 
-def size_in_kilobits(parameter):
-    """
-    Calculate the size of a parameter in kilobits.
+def pp_size_bit(group, pp):
+    return bit_size_matrix_group(group, pp.A_0_G_1) + bit_size_matrix_group(group, pp.A_0_W_1_G_1) + bit_size_matrix_group(group, pp.A_0_W_2_G_1)
 
-    Args:
-    parameter: The parameter whose size is to be calculated
+def msk_size_bit(group, msk):
+    # msk.K_1 and msk.K_2 are bytes therefore multiply with 8
+    return (8 * len(msk.K_1)) + (8*len(msk.K_2)) + bit_size_matrix(msk.W_1) + bit_size_matrix(msk.W_2)
 
-    Returns:
-    float: Size of the parameter in kilobits
-    """
-    size_in_bytes = sys.getsizeof(parameter)
-    size_in_bits = size_in_bytes * 8
-    size_in_kilobits = size_in_bits / 1024
-    return size_in_kilobits
+def ct_size_bit(group, ct):
+    return bit_size_vector_group(group, ct.y_0) + bit_size_vector_group(group, ct.y_1) + bit_size_vector_group(group, ct.y_2) + bit_size_vector_group(group, ct.c_0)
+
+def skf_size_bit(group, skf):
+    return bit_size_matrix_group(group, skf.k1)
